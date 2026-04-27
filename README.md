@@ -22,3 +22,40 @@ canvas displays the js file in a playable enviorment
 HTML, CSS, Vanilla JavaScript
 HTML Canvas for js rendering
 VS Code + GitHub
+
+-----
+Core Requirements Coverage 
+-----
+Requirement 
+Implementation 
+
+-----
+If Statements & Loops 
+-----
+Loops generating the walls updating the math every time user position changes and if statements to detect player movment 
+
+----
+Event Listeners 
+---
+Event listeners move the player forward/backwards and also the main DOM to display the js file in index
+
+----
+DOM Element Creation 
+-----
+uses canvas to display the js code onto index
+
+-----
+Classes & Subclasses 
+-----
+The Enemy is built into a main class while every few levels it changes to a diffrent subclass enemy with its own stats. Im thinking 
+class {
+x cord 
+y cord
+color
+speed
+  function for pathfinding to the player
+  }
+  and the enemy would be a snail that u die when it catches you while  have to run through a maze. 
+
+------
+
