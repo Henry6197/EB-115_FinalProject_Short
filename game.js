@@ -54,7 +54,7 @@ const turnSpeed = 0.03;
 const playerRadius = 0.20;
 const rayStepWidth = 2;
 const numRays = Math.floor(canvas.width / rayStepWidth);
-const player = {x: 0.5, y: 0.5, angle: 0};
+const player = {x: 2.5, y: 2.5, angle: 0};
 const gameState = "PLAYING";
 const zBuffer = new Array(numRays).fill(0);
 const wallTexture = new Image();
@@ -84,6 +84,77 @@ function canMoveTo(x, y) {
         !isWallAt(x - playerRadius, y + playerRadius) &&
         !isWallAt(x + playerRadius, y + playerRadius)
     );
+}
+class Snail{
+    constructor (x,y,speed){
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.height=0.15;
+        this.width=0.25;
+        this.path = [];
+        this.lastpathupdate = 0;
+        this.grid=4
+    }
+    findpath(targetx,targety){
+        const start = {x:Math.floor(this.x*this.grid), y: Math.floor(this.y*this.grid)};
+        const end = {x:Math.floor(targetx*this.grid), y: Math.floor(targety*this.grid)};
+        let listo=[{...start,g:0,h: 0, f:0 , parent: null}];
+        let listc = new Set();
+        while (listo.length>0){
+            let lidx=0;
+            for(let i = 0; i< listo.length; i++) if (listo[i].f < listo[lidx].f) lidx=i;
+            let current = listo[lidx];
+            if (current.x ===end.x && current.y === end.y){
+                let path = [];
+                while (current.parent){
+                    path.push(current);
+                    current = current.parent;
+                }
+                return path.reverse();
+            }
+            listo.splice(lidx,1);
+            listc.add(`${current.x},${current.y}`);
+            for (let dx=-1; dx<=1; dx++){
+                for (let dy=-1; dy<=1; dy++){
+                  if (dx===0 && dy===0) continue;
+                  let nx = current.x + dx, ny = current.y + dy; 
+                  let mx = Math.floor(nx/this.grid), my = Math.floor(ny/this.grid);
+                  if (my < 0 || my >= map.length || mx < 0 || mx >= map[0].length|| map[my][mx]===1||listc.has(`${nx},${ny}`)) continue;
+                  let movecost=(dx!==0 && dy!==0) ? 1.414 : 1;
+                  let gs = current.g + movecost, hs = Math.sqrt((nx-end.x)**2+(ny-end.y)**2);
+                  let onode = listo.find(n=>n.x===nx && n.y===ny);
+                  if (!onode || gs < onode.g){
+                    if (!onode) listo.push({x:nx,y:ny,g:gs,h:hs,f:gs+hs,parent:current});
+                    else {onode.g=gs;onode.f = gs+hs; onode.parent=current;}
+                    }
+                }
+            }
+    }
+    return [];
+    }
+    update(player) {
+        const now = Date.now();
+        if (now - this.lastpathupdate > 400) {this.path= this.findpath(player.x, player.y); this.lastpathupdate = now;}
+        if (this.path.length > 0) {
+            let target = this.path[0];
+            let tx = (target.x + 0.5) / this.grid, ty = (target.y + 0.5) / this.grid;
+            let dx = tx-this.x, dy = ty - this.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            if (dist<0.05) {this.path.shift();}
+            else {this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;}
+        }
+    }
+}
+class speedysnail extends Snail{
+    constructor(x,y){
+        super(x,y,0.035);
+    }
+}
+class slowysnail extends Snail{
+    constructor(x,y){
+        super(x,y,0.015);
+    }
 }
 
 function castRays(angle) {
@@ -221,7 +292,24 @@ function render() {
                 ctx.fillRect(screenX, wallTop, rayStepWidth, ray.wallH);
             }
         }
-
+        // Draw Enemies
+        for (let enemy of snails) {
+        drawSnails();
+            let dx = enemy.x - player.x, dy = enemy.y - player.y;
+            let dist = Math.sqrt(dx*dx + dy*dy);
+            let sa = Math.atan2(dy,dx) - player.angle;
+            while (sa < -Math.PI) sa += Math.PI*2;
+            while (sa > Math.PI) sa -= Math.PI*2;
+            if (Math.abs(sa) < FOV) {
+                let bs = WallHeight / dist, sh = bs * enemy.height, sw = bs * enemy.width;
+                let sx = Math.atan2(dy,dx) - player.angle;
+                while (sx < -Math.PI) sx += Math.PI*2; while (sx > Math.PI) sx -= Math.PI*2;
+                for (let x = Math.floor(sx - sw/2); x < sx + sw/2; x++) {
+                if (x >= 0 && x < canvas.width && dist < zBuffer[x]) {
+                    ctx.fillRect(x, (canvas.height/2) + (bs/2) - sh, 1, sh);
+                }
+            }
+        }
         // ------- Draw minimap ---------
         drawMinimap(); // this line is AI generated
         // ------------------------------
