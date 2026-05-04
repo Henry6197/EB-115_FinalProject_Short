@@ -1,64 +1,333 @@
-const canvas= document.getElementById("game");
+const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-const map = [
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-[1,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,1],
-[1,0,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,0,1,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
-[1,0,1,0,1,0,1,1,1,0,1,0,0,0,1,0,0,0,1,1,0,0,1,0,1,0,1,0,0,0,1,0,1,1,1,0,1,1,0,1],
-[1,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,0,1,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,1,0,1],
-[1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1],
-[1,1,1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,1,0,0,1,1,0,0,1,1,0,0,1,1,0,1,0,1,0,1],
-[1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1],
-[1,0,1,0,0,0,1,1,1,0,1,0,0,0,1,0,0,1,1,1,0,1,1,0,0,0,1,1,1,0,1,0,0,0,1,1,1,0,1,1],
-[1,0,1,1,0,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0,1,1,0,1,1,0,1,0,1,1,0,1,0,0,0,0,0,1],
-[1,0,0,1,0,0,0,0,1,0,0,1,0,0,1,0,1,0,1,0,1,0,0,1,0,0,0,0,1,0,0,1,0,1,0,1,1,1,0,1],
-[1,1,0,1,1,1,0,1,1,1,0,1,1,0,1,0,1,0,1,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,0,0,0,1],
-[1,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,1],
-[1,0,1,1,0,1,1,1,1,1,0,1,1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,1,0,1,1,1,0,1,0,1],
-[1,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,1],
-[1,0,1,0,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1,1,0,1,1,0,1,1,0,1,1,1,0,1,1,1,0,1],
-[1,0,1,0,1,0,0,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,0,1,0,1],
-[1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,1,0,1,0,1,0,1,0,1,0,1],
-[1,0,0,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1],
-[1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1],
-[1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1],
-[1,0,1,0,1,1,0,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
-[1,0,1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,1],
-[1,0,1,1,1,1,1,1,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1,1],
-[1,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,1],
-[1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,0,1,1,0,0,1,1,0,0,1,0,1,1,1,1,0,1],
-[1,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
-[1,0,1,0,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,0,1,0,1],
-[1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1],
-[1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1],
-[1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1],
-[1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1],
-[1,0,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-[1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
-[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+let map = [
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 ];
 
-const armImg = new Image();
-armImg.src = 'player.png'; 
-const FOV = Math.PI/4;
+let START_CELL = { x: 0, y: 0 };
+let END_CELL = { x: 29, y: 38 };
+class Snail {
+    constructor(x, y, speed, color) {
+        this.x = x;
+        this.y = y;
+        this.speed = speed;
+        this.color = color;
+        this.heightScale = 0.15;
+        this.widthScale = 0.25;
+        this.hitRadiusGrid = 0.12;
+        this.path = [];
+        this.lastPathUpdate = 0;
+        this.gridRes = 4;
+    }
+
+    findPath(targetX, targetY) {
+        const isBlocked = (gx, gy) => {
+            const mX = Math.floor(gx / this.gridRes);
+            const mY = Math.floor(gy / this.gridRes);
+            return (
+                mY < 0 || mY >= map.length ||
+                mX < 0 || mX >= map[0].length ||
+                map[mY][mX] === 1
+            );
+        };
+
+        const start = { x: Math.floor(this.x * this.gridRes), y: Math.floor(this.y * this.gridRes) };
+        const end = { x: Math.floor(targetX * this.gridRes), y: Math.floor(targetY * this.gridRes) };
+        const openList = [{ ...start, g: 0, h: 0, f: 0, parent: null }];
+        const closedList = new Set();
+        while (openList.length > 0) {
+            let lowIdx = 0;
+            for (let i = 0; i < openList.length; i++) {
+                if (openList[i].f < openList[lowIdx].f) {
+                    lowIdx = i;
+                }
+            }
+            let curr = openList[lowIdx];
+            if (curr.x === end.x && curr.y === end.y) {
+                const path = [];
+                while (curr.parent) {
+                    path.push(curr);
+                    curr = curr.parent;
+                }
+                return path.reverse();
+            }
+            openList.splice(lowIdx, 1);
+            closedList.add(`${curr.x},${curr.y}`);
+            for (let dx = -1; dx <= 1; dx++) {
+                for (let dy = -1; dy <= 1; dy++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = curr.x + dx;
+                    const ny = curr.y + dy;
+                    if (isBlocked(nx, ny) || closedList.has(`${nx},${ny}`)) continue;
+                    // Prevent diagonal corner cutting so snails don't clip through wall corners.
+                    if (dx !== 0 && dy !== 0) {
+                        if (isBlocked(curr.x + dx, curr.y) || isBlocked(curr.x, curr.y + dy)) continue;
+                    }
+                    const moveCost = (dx !== 0 && dy !== 0) ? 1.414 : 1;
+                    const gScore = curr.g + moveCost;
+                    const hScore = Math.sqrt((nx - end.x) ** 2 + (ny - end.y) ** 2);
+                    const openNode = openList.find((node) => node.x === nx && node.y === ny);
+                    if (!openNode || gScore < openNode.g) {
+                        if (!openNode) {
+                            openList.push({
+                                x: nx,
+                                y: ny,
+                                g: gScore,
+                                h: hScore,
+                                f: gScore + hScore,
+                                parent: curr,
+                            });
+                        } else {
+                            openNode.g = gScore;
+                            openNode.f = gScore + hScore;
+                            openNode.parent = curr;
+                        }
+                    }
+                }
+            }
+        }
+        return [];
+    }
+
+    update(player) {
+        const now = Date.now();
+        if (now - this.lastPathUpdate > 400) {
+            this.path = this.findPath(player.x, player.y);
+            this.lastPathUpdate = now;
+        }
+        if (this.path.length > 0) {
+            const target = this.path[0];
+            const tx = (target.x + 0.5) / this.gridRes;
+            const ty = (target.y + 0.5) / this.gridRes;
+            const dx = tx - this.x;
+            const dy = ty - this.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 0.05) {
+                this.path.shift();
+            } else {
+                this.x += (dx / dist) * this.speed;
+                this.y += (dy / dist) * this.speed;
+            }
+        }
+    }
+}
+class LargeSnail extends Snail {
+    constructor(x, y) {
+        super(x, y, 0.01, "#556B2F");
+        this.heightScale = 0.4;
+        this.widthScale = 2.5;
+        this.hitRadiusGrid = 0.11;
+    }
+}
+class TurboSnail extends Snail {
+    constructor(x, y) {
+        super(x, y, 0.015, "#00FF7F");
+        this.heightScale = 0.4;
+        this.widthScale = 1.0;
+        this.hitRadiusGrid = 0.09;
+    }
+}
+function loadImage(src, onLoad) {
+    const image = new Image();
+    image.onload = onLoad;
+    image.src = src;
+    return image;
+}
+function tryPlay(audio) {
+    const playAttempt = audio.play();
+    if (playAttempt && typeof playAttempt.catch === "function") {
+        playAttempt.catch(() => {});
+    }
+}
+function stopAudio(audio, reset = true) {
+    if (audio.paused) return;
+    audio.pause();
+    if (reset) {
+        audio.currentTime = 0;
+    }
+}
+let snailImgReady = false;
+const snailImg = loadImage("snail.png", () => {
+    snailImgReady = true;
+});
+let snails = [
+    new LargeSnail(1, 10),
+    new TurboSnail(1, 10)
+];
+const armImg = loadImage("player.png");
+const armImgLeft = loadImage("player.png");
+const FOV = Math.PI / 4;
 const wallh = 600;
 const tileSize = 2;
-const moveSpeed = 0.055; 
-const turnSpeed = 0.03; 
+const moveSpeed = 0.045;
+const turnSpeed = 0.025;
 const playerRadius = 0.20;
+const snailAudioDistance = 5;
+const breathIntervalMs = 7000;
 const rayStepWidth = 2;
 const numRays = Math.floor(canvas.width / rayStepWidth);
-const player = {x: 2.5, y: 2.5, angle: 0};
-const gameState = "PLAYING";
+const player = {
+    x: (START_CELL.x + 0.5) * tileSize,
+    y: (START_CELL.y + 0.5) * tileSize,
+    angle: 0
+};
+let gameState = "PLAYING";
 const zBuffer = new Array(numRays).fill(0);
 const wallTexture = new Image();
 let wallTextureReady = false;
+const slimeAudio = new Audio("slime.mp3");
+slimeAudio.loop = true;
+slimeAudio.preload = "auto";
+const breathAudio = new Audio("breath.mp3");
+breathAudio.loop = false;
+breathAudio.preload = "auto";
+const runAudio = new Audio("run.mp3");
+runAudio.loop = true;
+runAudio.volume = 0.2;
+runAudio.preload = "auto";
+let lastBreathPlayAt = 0;
+let armBobPhase = 0;
+const armBobAmplitude = 12;
+const armBobSpeed = 0.12;
+const MAZE_IMAGE_SRC = "maze-coloring-page-find-the-right-way-to-the-solution-square-maze-black-line-on-white-background-free-vector.webp";
+const MAZE_GRID_SIZE = 40;
+let mazeReady = false;
+
+function extractMazeFromImage(image, gridSize) {
+    const offscreen = document.createElement("canvas");
+    offscreen.width = image.width;
+    offscreen.height = image.height;
+    const octx = offscreen.getContext("2d");
+    octx.drawImage(image, 0, 0);
+    const { data, width, height } = octx.getImageData(0, 0, image.width, image.height);
+
+    const luminanceAt = (x, y) => {
+        const idx = (y * width + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
+    };
+
+    let minX = width;
+    let minY = height;
+    let maxX = 0;
+    let maxY = 0;
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+            if (luminanceAt(x, y) < 80) {
+                if (x < minX) minX = x;
+                if (y < minY) minY = y;
+                if (x > maxX) maxX = x;
+                if (y > maxY) maxY = y;
+            }
+        }
+    }
+
+    if (minX >= maxX || minY >= maxY) return [];
+
+    const cropW = maxX - minX + 1;
+    const cropH = maxY - minY + 1;
+    const dark = Array.from({ length: cropH }, () => Array(cropW).fill(0));
+    for (let y = 0; y < cropH; y++) {
+        for (let x = 0; x < cropW; x++) {
+            dark[y][x] = luminanceAt(minX + x, minY + y) < 65 ? 1 : 0;
+        }
+    }
+
+    const rowSums = dark.map((row) => row.reduce((sum, v) => sum + v, 0));
+    const colSums = Array.from({ length: cropW }, (_, x) => dark.reduce((sum, row) => sum + row[x], 0));
+    const span = Math.min(140, cropH, cropW);
+
+    let top = 0;
+    let bottom = cropH - 1;
+    let left = 0;
+    let right = cropW - 1;
+    for (let i = 0; i < span; i++) {
+        if (rowSums[i] > rowSums[top]) top = i;
+        if (rowSums[cropH - 1 - i] > rowSums[bottom]) bottom = cropH - 1 - i;
+        if (colSums[i] > colSums[left]) left = i;
+        if (colSums[cropW - 1 - i] > colSums[right]) right = cropW - 1 - i;
+    }
+
+    const innerTop = Math.max(0, top + 2);
+    const innerLeft = Math.max(0, left + 2);
+    const innerBottom = Math.max(innerTop + 1, bottom - 1);
+    const innerRight = Math.max(innerLeft + 1, right - 1);
+    const innerH = innerBottom - innerTop;
+    const innerW = innerRight - innerLeft;
+
+    const out = Array.from({ length: gridSize }, () => Array(gridSize).fill(1));
+    for (let gy = 0; gy < gridSize; gy++) {
+        const y0 = Math.floor((gy * innerH) / gridSize) + innerTop;
+        const y1 = Math.floor(((gy + 1) * innerH) / gridSize) + innerTop;
+        for (let gx = 0; gx < gridSize; gx++) {
+            const x0 = Math.floor((gx * innerW) / gridSize) + innerLeft;
+            const x1 = Math.floor(((gx + 1) * innerW) / gridSize) + innerLeft;
+            let darkCount = 0;
+            let total = 0;
+            for (let y = y0; y < y1; y++) {
+                for (let x = x0; x < x1; x++) {
+                    darkCount += dark[y][x];
+                    total++;
+                }
+            }
+            const ratio = total > 0 ? darkCount / total : 1;
+            out[gy][gx] = ratio > 0.055 ? 1 : 0;
+        }
+    }
+
+    // Openings for START and END labels.
+    out[0][0] = 0;
+    out[0][1] = 0;
+    out[1][0] = 0;
+    out[1][1] = 0;
+    out[gridSize - 1][gridSize - 1] = 0;
+    out[gridSize - 1][gridSize - 2] = 0;
+    out[gridSize - 2][gridSize - 1] = 0;
+    out[gridSize - 2][gridSize - 2] = 0;
+
+    return out;
+}
+
+function initializeMazeFromImage() {
+    const mazeImage = new Image();
+    mazeImage.onload = () => {
+        const parsed = extractMazeFromImage(mazeImage, MAZE_GRID_SIZE);
+        if (parsed.length > 0) {
+            map = parsed;
+            START_CELL = { x: 0, y: 0 };
+            END_CELL = { x: MAZE_GRID_SIZE - 2, y: MAZE_GRID_SIZE - 2 };
+            player.x = (START_CELL.x + 0.5) * tileSize;
+            player.y = (START_CELL.y + 0.5) * tileSize;
+            player.angle = 0;
+            snails = [
+                new LargeSnail(3.5, 7.5),
+                new TurboSnail(15.5, 15.5)
+            ];
+        }
+        mazeReady = true;
+    };
+    mazeImage.onerror = () => {
+        mazeReady = true;
+    };
+    mazeImage.src = MAZE_IMAGE_SRC;
+}
 
 //-- Minimap constants --
 const minimapTileSize = 6; // Each maze cell in pixels on minimap // this line is AI generated
@@ -69,6 +338,7 @@ wallTexture.onload = () => {
     wallTextureReady = true;
 };
 wallTexture.src = "wall.png";
+initializeMazeFromImage();
 
 function isWallAt(x, y) {
     const cellX = Math.floor(x / tileSize);
@@ -85,75 +355,63 @@ function canMoveTo(x, y) {
         !isWallAt(x + playerRadius, y + playerRadius)
     );
 }
-class Snail{
-    constructor (x,y,speed){
-        this.x = x;
-        this.y = y;
-        this.speed = speed;
-        this.height=0.15;
-        this.width=0.25;
-        this.path = [];
-        this.lastpathupdate = 0;
-        this.grid=4
-    }
-    findpath(targetx,targety){
-        const start = {x:Math.floor(this.x*this.grid), y: Math.floor(this.y*this.grid)};
-        const end = {x:Math.floor(targetx*this.grid), y: Math.floor(targety*this.grid)};
-        let listo=[{...start,g:0,h: 0, f:0 , parent: null}];
-        let listc = new Set();
-        while (listo.length>0){
-            let lidx=0;
-            for(let i = 0; i< listo.length; i++) if (listo[i].f < listo[lidx].f) lidx=i;
-            let current = listo[lidx];
-            if (current.x ===end.x && current.y === end.y){
-                let path = [];
-                while (current.parent){
-                    path.push(current);
-                    current = current.parent;
-                }
-                return path.reverse();
-            }
-            listo.splice(lidx,1);
-            listc.add(`${current.x},${current.y}`);
-            for (let dx=-1; dx<=1; dx++){
-                for (let dy=-1; dy<=1; dy++){
-                  if (dx===0 && dy===0) continue;
-                  let nx = current.x + dx, ny = current.y + dy; 
-                  let mx = Math.floor(nx/this.grid), my = Math.floor(ny/this.grid);
-                  if (my < 0 || my >= map.length || mx < 0 || mx >= map[0].length|| map[my][mx]===1||listc.has(`${nx},${ny}`)) continue;
-                  let movecost=(dx!==0 && dy!==0) ? 1.414 : 1;
-                  let gs = current.g + movecost, hs = Math.sqrt((nx-end.x)**2+(ny-end.y)**2);
-                  let onode = listo.find(n=>n.x===nx && n.y===ny);
-                  if (!onode || gs < onode.g){
-                    if (!onode) listo.push({x:nx,y:ny,g:gs,h:hs,f:gs+hs,parent:current});
-                    else {onode.g=gs;onode.f = gs+hs; onode.parent=current;}
-                    }
-                }
-            }
-    }
-    return [];
-    }
-    update(player) {
-        const now = Date.now();
-        if (now - this.lastpathupdate > 400) {this.path= this.findpath(player.x, player.y); this.lastpathupdate = now;}
-        if (this.path.length > 0) {
-            let target = this.path[0];
-            let tx = (target.x + 0.5) / this.grid, ty = (target.y + 0.5) / this.grid;
-            let dx = tx-this.x, dy = ty - this.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist<0.05) {this.path.shift();}
-            else {this.x += (dx / dist) * this.speed; this.y += (dy / dist) * this.speed;}
+
+function checkSnailCollisions() {
+    const playerGridX = player.x / tileSize;
+    const playerGridY = player.y / tileSize;
+    const playerRadiusGrid = playerRadius / tileSize;
+
+    for (const snail of snails) {
+        const dx = snail.x - playerGridX;
+        const dy = snail.y - playerGridY;
+        const snailRadiusGrid = snail.hitRadiusGrid;
+        const hitDist = snailRadiusGrid + playerRadiusGrid;
+
+        if ((dx * dx) + (dy * dy) <= hitDist * hitDist) {
+            gameState = "LOST";
+            return;
         }
     }
 }
-class speedysnail extends Snail{
-    constructor(x,y){
-        super(x,y,0.035);
+
+function updateSnailAudio() {
+    const playerGridX = player.x / tileSize;
+    const playerGridY = player.y / tileSize;
+    let nearest = Infinity;
+
+    for (const snail of snails) {
+        const dx = snail.x - playerGridX;
+        const dy = snail.y - playerGridY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < nearest) nearest = dist;
+    }
+
+    if (nearest <= snailAudioDistance) {
+        if (slimeAudio.paused) {
+            tryPlay(slimeAudio);
+        }
+    } else {
+        stopAudio(slimeAudio);
     }
 }
-class slowysnail extends Snail{
-    constructor(x,y){
-        super(x,y,0.015);
+
+function updateBreathAudio() {
+    const now = Date.now();
+    if (now - lastBreathPlayAt >= breathIntervalMs) {
+        breathAudio.currentTime = 0;
+        lastBreathPlayAt = now;
+        tryPlay(breathAudio);
+    }
+}
+
+function updateRunAudio() {
+    const isMoving = !!(keys["w"] || keys["s"]);
+    if (isMoving) {
+        if (runAudio.paused) {
+            tryPlay(runAudio);
+        }
+    } else {
+        stopAudio(runAudio);
     }
 }
 
@@ -183,8 +441,12 @@ function castRays(angle) {
 }
 
 const keys = {};
-window.addEventListener("keydown", (e) => keys[e.key.toLowerCase()] = true);
-window.addEventListener("keyup", (e) => keys[e.key.toLowerCase()] = false);
+window.addEventListener("keydown", (event) => {
+    keys[event.key.toLowerCase()] = true;
+});
+window.addEventListener("keyup", (event) => {
+    keys[event.key.toLowerCase()] = false;
+});
 
 // -------- Minimap Drawing Function (AI generated) --------
 function drawMinimap() { // this line is AI generated
@@ -213,16 +475,7 @@ function drawMinimap() { // this line is AI generated
             ); // this line is AI generated
         } // this line is AI generated
     } // this line is AI generated
-    // Player // this line is AI generated
-    ctx.fillStyle = "#fc3c3c"; // this line is AI generated
-    ctx.beginPath(); // this line is AI generated
-    ctx.arc( // this line is AI generated
-        mmX + (player.x / tileSize) * minimapTileSize, // this line is AI generated
-        mmY + (player.y / tileSize) * minimapTileSize, // this line is AI generated
-        minimapTileSize * 0.4, // this line is AI generated
-        0, Math.PI * 2 // this line is AI generated
-    ); // this line is AI generated
-    ctx.fill(); // this line is AI generated
+
 
     // Player facing direction // this line is AI generated
     ctx.strokeStyle = "#d11"; // this line is AI generated
@@ -241,7 +494,75 @@ function drawMinimap() { // this line is AI generated
 } // this line is AI generated
 // -------- End Minimap Drawing --------
 
+function drawSnails() {
+    for (const snail of snails) {
+        const worldX = snail.x * tileSize;
+        const worldY = snail.y * tileSize;
+        const relX = worldX - player.x;
+        const relY = worldY - player.y;
+        const distance = Math.sqrt(relX * relX + relY * relY);
+        if (distance <= 0.001) continue;
+        let angleToSnail = Math.atan2(relY, relX) - player.angle;
+        while (angleToSnail < -Math.PI) angleToSnail += Math.PI * 2;
+        while (angleToSnail > Math.PI) angleToSnail -= Math.PI * 2;
+        if (Math.abs(angleToSnail) > FOV / 2 + 0.2) continue;
+        const screenX = ((angleToSnail + FOV / 2) / FOV) * canvas.width;
+        const zIndex = Math.floor(screenX / rayStepWidth);
+        if (zIndex < 0 || zIndex >= zBuffer.length) continue;
+        if (distance > zBuffer[zIndex] + 0.03) continue;
+        const spriteHeight = (wallh / distance) * snail.heightScale;
+        const spriteWidth = spriteHeight * (snail.widthScale / Math.max(snail.heightScale, 0.001));
+        const groundY = canvas.height / 2 + wallh / (2 * distance);
+        const left = screenX - spriteWidth / 2;
+        const top = groundY - spriteHeight;
+        const stripW = Math.max(1, rayStepWidth);
+        if (snailImgReady) {
+            // Clip sprite by zBuffer per column so walls hide only blocked portions.
+            for (let sx = left; sx < left + spriteWidth; sx += stripW) {
+                const sampleX = sx + stripW * 0.5;
+                const rayIdx = Math.floor(sampleX / rayStepWidth);
+                if (rayIdx < 0 || rayIdx >= zBuffer.length) continue;
+                if (distance > zBuffer[rayIdx] + 0.03) continue;
+                const srcX = ((sx - left) / spriteWidth) * snailImg.width;
+                const srcW = (stripW / spriteWidth) * snailImg.width;
+                if (srcW <= 0) continue;
+                ctx.drawImage(
+                    snailImg,
+                    srcX,
+                    0,
+                    srcW,
+                    snailImg.height,
+                    sx,
+                    top,
+                    stripW,
+                    spriteHeight
+                );
+            }
+        } else {
+            ctx.fillStyle = snail.color;
+            for (let sx = left; sx < left + spriteWidth; sx += stripW) {
+                const sampleX = sx + stripW * 0.5;
+                const rayIdx = Math.floor(sampleX / rayStepWidth);
+                if (rayIdx < 0 || rayIdx >= zBuffer.length) continue;
+                if (distance > zBuffer[rayIdx] + 0.03) continue;
+                ctx.fillRect(sx, top, stripW, spriteHeight);
+            }
+        }
+    }
+}
+
 function render() {
+    if (!mazeReady) {
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "28px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("Loading maze...", canvas.width / 2, canvas.height / 2);
+        requestAnimationFrame(render);
+        return;
+    }
+
     if (gameState === "PLAYING") {
         if (keys["a"]) player.angle -= turnSpeed;
         if (keys["d"]) player.angle += turnSpeed;
@@ -250,10 +571,16 @@ function render() {
         const moveY = Math.sin(player.angle) * moveAmount;
         const nextX = player.x + moveX;
         const nextY = player.y + moveY;
-
         // Resolve movement axis-by-axis to keep smooth wall sliding.
         if (canMoveTo(nextX, player.y)) player.x = nextX;
         if (canMoveTo(player.x, nextY)) player.y = nextY;
+        for (const snail of snails) {
+            snail.update({ x: player.x / tileSize, y: player.y / tileSize });
+        }
+        updateRunAudio();
+        updateBreathAudio();
+        updateSnailAudio();
+        checkSnailCollisions();
 
         // Draw Environment
         ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
@@ -292,41 +619,47 @@ function render() {
                 ctx.fillRect(screenX, wallTop, rayStepWidth, ray.wallH);
             }
         }
-        // Draw Enemies
-        for (let enemy of snails) {
+
         drawSnails();
-            let dx = enemy.x - player.x, dy = enemy.y - player.y;
-            let dist = Math.sqrt(dx*dx + dy*dy);
-            let sa = Math.atan2(dy,dx) - player.angle;
-            while (sa < -Math.PI) sa += Math.PI*2;
-            while (sa > Math.PI) sa -= Math.PI*2;
-            if (Math.abs(sa) < FOV) {
-                let bs = WallHeight / dist, sh = bs * enemy.height, sw = bs * enemy.width;
-                let sx = Math.atan2(dy,dx) - player.angle;
-                while (sx < -Math.PI) sx += Math.PI*2; while (sx > Math.PI) sx -= Math.PI*2;
-                for (let x = Math.floor(sx - sw/2); x < sx + sw/2; x++) {
-                if (x >= 0 && x < canvas.width && dist < zBuffer[x]) {
-                    ctx.fillRect(x, (canvas.height/2) + (bs/2) - sh, 1, sh);
-                }
-            }
-        }
+
         // ------- Draw minimap ---------
         drawMinimap(); // this line is AI generated
         // ------------------------------
-        const centerX = canvas.width / 2;
-        const rightarmX = canvas.width * 0.75;
+        const leftArmX = canvas.width * 0.25;
+        const rightArmX = canvas.width * 0.75;
         const bottom = canvas.height;
         const armSize = 350; // Adjust this to change arm size on screen
+        const isWalking = !!(keys["w"] || keys["s"]);
+        if (isWalking) armBobPhase += armBobSpeed;
+        else armBobPhase = 0;
+        const rightArmYOffset = isWalking ? Math.sin(armBobPhase) * armBobAmplitude : 0;
+        const leftArmYOffset = -rightArmYOffset;
+
+        if (armImgLeft.complete) {
+            ctx.save();
+            ctx.translate(leftArmX, bottom);
+            ctx.scale(-1, 1);
+            ctx.drawImage(armImgLeft, -armSize / 2, -350 + leftArmYOffset, 250, 350);
+            ctx.restore();
+        }
 
         if (armImg.complete) {
             ctx.save();
-            ctx.translate(rightarmX, bottom);
-            ctx.drawImage(armImg, -armSize / 2, -350, 250, 350);
+            ctx.translate(rightArmX, bottom);
+            ctx.drawImage(armImg, -armSize / 2, -350 + rightArmYOffset, 250, 350);
             ctx.restore();
         }
 
     } else {
-        ctx.fillStyle = "black"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        stopAudio(slimeAudio);
+        stopAudio(breathAudio);
+        stopAudio(runAudio);
+        ctx.fillStyle = "black";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.font = "42px sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
     }
     requestAnimationFrame(render);
 }
