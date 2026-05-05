@@ -353,6 +353,34 @@ function drawTimer(ms) {
     ctx.restore();
 }
 
+function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+}
+
+function drawTimer(ms) {
+    const label = `${formatElapsedTime(ms)}`;
+    ctx.save();
+    ctx.font = "24px 'Times New Roman', serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    const metrics = ctx.measureText(label);
+    const boxWidth = metrics.width + 20;
+    const boxHeight = 36;
+    const x = canvas.width - 12;
+    const y = 12;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(x - boxWidth, y - 6, boxWidth, boxHeight);
+
+    ctx.fillStyle = "#ddc49a";
+    ctx.fillText(label, x - 10, y);
+    ctx.restore();
+}
+
 const keys = {};
 window.addEventListener("keydown", (event) => {
     keys[event.key.toLowerCase()] = true;
@@ -587,21 +615,9 @@ function render() {
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.textAlign = "center";
-
-        if (gameState === "ESCAPED") {
-            ctx.fillStyle = "#7CFC00";
-            ctx.font = "48px sans-serif";
-            ctx.fillText("You Escaped!", canvas.width / 2, canvas.height / 2 - 10);
-            ctx.fillStyle = "white";
-            ctx.font = "24px sans-serif";
-            ctx.fillText(`Escape Time ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 38);
-        } else {
-            ctx.fillStyle = "white";
-            ctx.font = "42px sans-serif";
-            ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
-            ctx.font = "24px sans-serif";
-            ctx.fillText(`You Lasted ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 42);
-        }
+        ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
+        ctx.font = "24px sans-serif";
+        ctx.fillText(`You lasted ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 42);
     }
     requestAnimationFrame(render);
 }
