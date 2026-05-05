@@ -136,7 +136,7 @@ class LargeSnail extends Snail {
 }
 class TurboSnail extends Snail {
     constructor(x, y) {
-        super(x, y, 0.015, "#00FF7F");
+        super(x, y, 0.012, "#00FF7F");
         this.heightScale = 0.4;
         this.widthScale = 1.0;
         this.hitRadiusGrid = 0.09;
@@ -187,6 +187,8 @@ const player = {
     angle: 0
 };
 let gameState = "PLAYING";
+let gameStartTimeMs = null;
+let elapsedTimeMs = 0;
 const zBuffer = new Array(numRays).fill(0);
 const wallTexture = new Image();
 let wallTextureReady = false;
@@ -440,6 +442,34 @@ function castRays(angle) {
     return { distance, wallH: wallh / Math.max(distance, 0.0001), side, wallX: wallXFrac, rayDirX, rayDirY };
 }
 
+function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+}
+
+function drawTimer(ms) {
+    const label = `${formatElapsedTime(ms)}`;
+    ctx.save();
+    ctx.font = "24px 'Times New Roman', serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    const metrics = ctx.measureText(label);
+    const boxWidth = metrics.width + 20;
+    const boxHeight = 36;
+    const x = canvas.width - 12;
+    const y = 12;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(x - boxWidth, y - 6, boxWidth, boxHeight);
+
+    ctx.fillStyle = "#ddc49a";
+    ctx.fillText(label, x - 10, y);
+    ctx.restore();
+}
+
 const keys = {};
 window.addEventListener("keydown", (event) => {
     keys[event.key.toLowerCase()] = true;
@@ -552,18 +582,14 @@ function drawSnails() {
 }
 
 function render() {
-    if (!mazeReady) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "28px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Loading maze...", canvas.width / 2, canvas.height / 2);
-        requestAnimationFrame(render);
-        return;
-    }
+
 
     if (gameState === "PLAYING") {
+        if (gameStartTimeMs === null) {
+            gameStartTimeMs = Date.now();
+        }
+        elapsedTimeMs = Date.now() - gameStartTimeMs;
+
         if (keys["a"]) player.angle -= turnSpeed;
         if (keys["d"]) player.angle += turnSpeed;
         const moveAmount = (keys["w"] ? moveSpeed : 0) + (keys["s"] ? -moveSpeed : 0);
@@ -650,6 +676,8 @@ function render() {
             ctx.restore();
         }
 
+        drawTimer(elapsedTimeMs);
+
     } else {
         stopAudio(slimeAudio);
         stopAudio(breathAudio);
@@ -660,6 +688,8 @@ function render() {
         ctx.font = "42px sans-serif";
         ctx.textAlign = "center";
         ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
+        ctx.font = "24px sans-serif";
+        ctx.fillText(`You lasted ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 42);
     }
     requestAnimationFrame(render);
 }
