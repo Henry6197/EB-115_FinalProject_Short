@@ -2,25 +2,23 @@ const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
 let map = [
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-[0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+[0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+[0,1,0,1,0,1,1,0,1,1,0,1,0,1],
+[0,1,0,0,0,1,0,0,0,0,0,1,0,0],
+[0,1,1,1,0,1,0,1,1,1,1,1,1,0],
+[0,1,0,1,0,1,0,0,0,0,0,0,1,0],
+[0,1,0,1,0,1,0,1,0,1,1,0,1,0],
+[0,1,0,0,0,1,0,1,0,0,1,0,0,0],
+[0,1,1,1,1,1,1,1,1,0,1,1,1,1],
+[0,0,0,0,0,0,0,1,1,0,1,0,1,2],
+[1,1,1,0,1,1,0,1,0,0,0,0,1,0],
+[1,0,1,0,1,0,0,1,0,1,1,1,1,0],
+[1,0,0,0,1,0,1,1,0,1,1,1,1,0],
+[1,0,1,1,1,0,1,0,0,0,0,0,1,0],
+[1,0,0,0,1,0,1,0,1,1,1,0,1,0],
+[1,1,1,0,0,0,1,0,0,0,1,0,0,0],
 ];
 
-let START_CELL = { x: 0, y: 0 };
-let END_CELL = { x: 29, y: 38 };
 class Snail {
     constructor(x, y, speed, color) {
         this.x = x;
@@ -32,7 +30,7 @@ class Snail {
         this.hitRadiusGrid = 0.12;
         this.path = [];
         this.lastPathUpdate = 0;
-        this.gridRes = 4;
+        this.gridRes = 6; //snails grid is 4x per cell so that they can move more smooth
     }
 
     findPath(targetX, targetY) {
@@ -136,7 +134,7 @@ class LargeSnail extends Snail {
 }
 class TurboSnail extends Snail {
     constructor(x, y) {
-        super(x, y, 0.015, "#00FF7F");
+        super(x, y, 0.012, "#00FF7F");
         this.heightScale = 0.4;
         this.widthScale = 1.0;
         this.hitRadiusGrid = 0.09;
@@ -167,26 +165,28 @@ const snailImg = loadImage("snail.png", () => {
 });
 let snails = [
     new LargeSnail(1, 10),
-    new TurboSnail(1, 10)
+    new TurboSnail(12, 1)
 ];
 const armImg = loadImage("player.png");
 const armImgLeft = loadImage("player.png");
 const FOV = Math.PI / 4;
-const wallh = 600;
-const tileSize = 2;
+const wallh =700;
+const tileSize = 2.5;
 const moveSpeed = 0.045;
 const turnSpeed = 0.025;
 const playerRadius = 0.20;
-const snailAudioDistance = 5;
+const snailAudioDistance = 3.5;
 const breathIntervalMs = 7000;
 const rayStepWidth = 2;
 const numRays = Math.floor(canvas.width / rayStepWidth);
 const player = {
-    x: (START_CELL.x + 0.5) * tileSize,
-    y: (START_CELL.y + 0.5) * tileSize,
+    x: (0.5) * tileSize,
+    y: (0.5) * tileSize,
     angle: 0
 };
 let gameState = "PLAYING";
+let gameStartTimeMs = null;
+let elapsedTimeMs = 0;
 const zBuffer = new Array(numRays).fill(0);
 const wallTexture = new Image();
 let wallTextureReady = false;
@@ -204,147 +204,32 @@ let lastBreathPlayAt = 0;
 let armBobPhase = 0;
 const armBobAmplitude = 12;
 const armBobSpeed = 0.12;
-const MAZE_IMAGE_SRC = "maze-coloring-page-find-the-right-way-to-the-solution-square-maze-black-line-on-white-background-free-vector.webp";
-const MAZE_GRID_SIZE = 40;
 let mazeReady = false;
 
-function extractMazeFromImage(image, gridSize) {
-    const offscreen = document.createElement("canvas");
-    offscreen.width = image.width;
-    offscreen.height = image.height;
-    const octx = offscreen.getContext("2d");
-    octx.drawImage(image, 0, 0);
-    const { data, width, height } = octx.getImageData(0, 0, image.width, image.height);
-
-    const luminanceAt = (x, y) => {
-        const idx = (y * width + x) * 4;
-        const r = data[idx];
-        const g = data[idx + 1];
-        const b = data[idx + 2];
-        return (0.2126 * r) + (0.7152 * g) + (0.0722 * b);
-    };
-
-    let minX = width;
-    let minY = height;
-    let maxX = 0;
-    let maxY = 0;
-    for (let y = 0; y < height; y++) {
-        for (let x = 0; x < width; x++) {
-            if (luminanceAt(x, y) < 80) {
-                if (x < minX) minX = x;
-                if (y < minY) minY = y;
-                if (x > maxX) maxX = x;
-                if (y > maxY) maxY = y;
-            }
-        }
-    }
-
-    if (minX >= maxX || minY >= maxY) return [];
-
-    const cropW = maxX - minX + 1;
-    const cropH = maxY - minY + 1;
-    const dark = Array.from({ length: cropH }, () => Array(cropW).fill(0));
-    for (let y = 0; y < cropH; y++) {
-        for (let x = 0; x < cropW; x++) {
-            dark[y][x] = luminanceAt(minX + x, minY + y) < 65 ? 1 : 0;
-        }
-    }
-
-    const rowSums = dark.map((row) => row.reduce((sum, v) => sum + v, 0));
-    const colSums = Array.from({ length: cropW }, (_, x) => dark.reduce((sum, row) => sum + row[x], 0));
-    const span = Math.min(140, cropH, cropW);
-
-    let top = 0;
-    let bottom = cropH - 1;
-    let left = 0;
-    let right = cropW - 1;
-    for (let i = 0; i < span; i++) {
-        if (rowSums[i] > rowSums[top]) top = i;
-        if (rowSums[cropH - 1 - i] > rowSums[bottom]) bottom = cropH - 1 - i;
-        if (colSums[i] > colSums[left]) left = i;
-        if (colSums[cropW - 1 - i] > colSums[right]) right = cropW - 1 - i;
-    }
-
-    const innerTop = Math.max(0, top + 2);
-    const innerLeft = Math.max(0, left + 2);
-    const innerBottom = Math.max(innerTop + 1, bottom - 1);
-    const innerRight = Math.max(innerLeft + 1, right - 1);
-    const innerH = innerBottom - innerTop;
-    const innerW = innerRight - innerLeft;
-
-    const out = Array.from({ length: gridSize }, () => Array(gridSize).fill(1));
-    for (let gy = 0; gy < gridSize; gy++) {
-        const y0 = Math.floor((gy * innerH) / gridSize) + innerTop;
-        const y1 = Math.floor(((gy + 1) * innerH) / gridSize) + innerTop;
-        for (let gx = 0; gx < gridSize; gx++) {
-            const x0 = Math.floor((gx * innerW) / gridSize) + innerLeft;
-            const x1 = Math.floor(((gx + 1) * innerW) / gridSize) + innerLeft;
-            let darkCount = 0;
-            let total = 0;
-            for (let y = y0; y < y1; y++) {
-                for (let x = x0; x < x1; x++) {
-                    darkCount += dark[y][x];
-                    total++;
-                }
-            }
-            const ratio = total > 0 ? darkCount / total : 1;
-            out[gy][gx] = ratio > 0.055 ? 1 : 0;
-        }
-    }
-
-    // Openings for START and END labels.
-    out[0][0] = 0;
-    out[0][1] = 0;
-    out[1][0] = 0;
-    out[1][1] = 0;
-    out[gridSize - 1][gridSize - 1] = 0;
-    out[gridSize - 1][gridSize - 2] = 0;
-    out[gridSize - 2][gridSize - 1] = 0;
-    out[gridSize - 2][gridSize - 2] = 0;
-
-    return out;
-}
-
-function initializeMazeFromImage() {
-    const mazeImage = new Image();
-    mazeImage.onload = () => {
-        const parsed = extractMazeFromImage(mazeImage, MAZE_GRID_SIZE);
-        if (parsed.length > 0) {
-            map = parsed;
-            START_CELL = { x: 0, y: 0 };
-            END_CELL = { x: MAZE_GRID_SIZE - 2, y: MAZE_GRID_SIZE - 2 };
-            player.x = (START_CELL.x + 0.5) * tileSize;
-            player.y = (START_CELL.y + 0.5) * tileSize;
-            player.angle = 0;
-            snails = [
-                new LargeSnail(3.5, 7.5),
-                new TurboSnail(15.5, 15.5)
-            ];
-        }
-        mazeReady = true;
-    };
-    mazeImage.onerror = () => {
-        mazeReady = true;
-    };
-    mazeImage.src = MAZE_IMAGE_SRC;
-}
-
 //-- Minimap constants --
-const minimapTileSize = 6; // Each maze cell in pixels on minimap // this line is AI generated
-const minimapMargin = 8;   // Padding for the minimap in the canvas // this line is AI generated
+// const minimapTileSize = 6; // Each maze cell in pixels on minimap // this line is AI generated
+// const minimapMargin = 8;   // Padding for the minimap in the canvas // this line is AI generated
 //-----------------------
 
 wallTexture.onload = () => {
     wallTextureReady = true;
 };
 wallTexture.src = "wall.png";
-initializeMazeFromImage();
 
 function isWallAt(x, y) {
     const cellX = Math.floor(x / tileSize);
     const cellY = Math.floor(y / tileSize);
     if (cellY < 0 || cellY >= map.length || cellX < 0 || cellX >= map[0].length) return true;
-    return map[cellY][cellX] !== 0;
+    return map[cellY][cellX] === 1;
+}
+
+function checkEscapeTile() {
+    const cellX = Math.floor(player.x / tileSize);
+    const cellY = Math.floor(player.y / tileSize);
+    if (cellY < 0 || cellY >= map.length || cellX < 0 || cellX >= map[0].length) return;
+    if (map[cellY][cellX] === 2) {
+        gameState = "ESCAPED";
+    }
 }
 
 function canMoveTo(x, y) {
@@ -424,12 +309,12 @@ function castRays(angle) {
     let stepX = rayDirX < 0 ? -1 : 1, stepY = rayDirY < 0 ? -1 : 1;
     let sDX = rayDirX < 0 ? (px - mapX) * deltaDistX : (mapX + 1.0 - px) * deltaDistX;
     let sDY = rayDirY < 0 ? (py - mapY) * deltaDistY : (mapY + 1.0 - py) * deltaDistY;
-    let hit = 0, side = 0;
+    let hit = 0, side = 0, hitTile = 0;
     while (hit === 0) {
         if (sDX < sDY) { sDX += deltaDistX; mapX += stepX; side = 0; }
         else { sDY += deltaDistY; mapY += stepY; side = 1; }
         if (mapY < 0 || mapY >= map.length || mapX < 0 || mapX >= map[0].length) break;
-        if (map[mapY][mapX] > 0) hit = 1;
+        if (map[mapY][mapX] > 0) { hit = 1; hitTile = map[mapY][mapX]; }
     }
     let d = (side === 0) ? (sDX - deltaDistX) : (sDY - deltaDistY);
     const wallX = (side === 0)
@@ -437,7 +322,35 @@ function castRays(angle) {
         : px + d * rayDirX;
     const wallXFrac = wallX - Math.floor(wallX);
     const distance = d * tileSize * Math.cos(angle - player.angle);
-    return { distance, wallH: wallh / Math.max(distance, 0.0001), side, wallX: wallXFrac, rayDirX, rayDirY };
+    return { distance, wallH: wallh / Math.max(distance, 0.0001), side, wallX: wallXFrac, rayDirX, rayDirY, hitTile };
+}
+
+function formatElapsedTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, "0");
+    const seconds = String(totalSeconds % 60).padStart(2, "0");
+    return `${minutes}:${seconds}`;
+}
+
+function drawTimer(ms) {
+    const label = `${formatElapsedTime(ms)}`;
+    ctx.save();
+    ctx.font = "24px 'Times New Roman', serif";
+    ctx.textAlign = "right";
+    ctx.textBaseline = "top";
+
+    const metrics = ctx.measureText(label);
+    const boxWidth = metrics.width + 20;
+    const boxHeight = 36;
+    const x = canvas.width - 12;
+    const y = 12;
+
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    ctx.fillRect(x - boxWidth, y - 6, boxWidth, boxHeight);
+
+    ctx.fillStyle = "#ddc49a";
+    ctx.fillText(label, x - 10, y);
+    ctx.restore();
 }
 
 const keys = {};
@@ -448,51 +361,63 @@ window.addEventListener("keyup", (event) => {
     keys[event.key.toLowerCase()] = false;
 });
 
-// -------- Minimap Drawing Function (AI generated) --------
-function drawMinimap() { // this line is AI generated
-    const mapWidth = map[0].length; // this line is AI generated
-    const mapHeight = map.length; // this line is AI generated
-    const mmX = minimapMargin; // this line is AI generated
-    const mmY = minimapMargin; // this line is AI generated
-    const mmW = mapWidth * minimapTileSize; // this line is AI generated
-    const mmH = mapHeight * minimapTileSize; // this line is AI generated
+// // -------- Minimap Drawing Function (AI generated) --------
+// function drawMinimap() { // this line is AI generated
+//     const mapWidth = map[0].length; // this line is AI generated
+//     const mapHeight = map.length; // this line is AI generated
+//     const mmX = minimapMargin; // this line is AI generated
+//     const mmY = minimapMargin; // this line is AI generated
+//     const mmW = mapWidth * minimapTileSize; // this line is AI generated
+//     const mmH = mapHeight * minimapTileSize; // this line is AI generated
 
-    // Background // this line is AI generated
-    ctx.save(); // this line is AI generated
-    ctx.globalAlpha = 0.85; // this line is AI generated
-    ctx.fillStyle = "#353535"; // this line is AI generated
-    ctx.fillRect(mmX-2, mmY-2, mmW+4, mmH+4); // this line is AI generated
-    ctx.globalAlpha = 1.0; // this line is AI generated
+//     // Background // this line is AI generated
+//     ctx.save(); // this line is AI generated
+//     ctx.globalAlpha = 0.85; // this line is AI generated
+//     ctx.fillStyle = "#353535"; // this line is AI generated
+//     ctx.fillRect(mmX-2, mmY-2, mmW+4, mmH+4); // this line is AI generated
+//     ctx.globalAlpha = 1.0; // this line is AI generated
 
-    // Maze cells // this line is AI generated
-    for (let y = 0; y < mapHeight; y++) { // this line is AI generated
-        for (let x = 0; x < mapWidth; x++) { // this line is AI generated
-            ctx.fillStyle = map[y][x] === 1 ? "#555" : "#eee"; // this line is AI generated
-            ctx.fillRect( // this line is AI generated
-                mmX + x * minimapTileSize, // this line is AI generated
-                mmY + y * minimapTileSize, // this line is AI generated
-                minimapTileSize, minimapTileSize // this line is AI generated
-            ); // this line is AI generated
-        } // this line is AI generated
-    } // this line is AI generated
+//     // Maze cells // this line is AI generated
+//     for (let y = 0; y < mapHeight; y++) { // this line is AI generated
+//         for (let x = 0; x < mapWidth; x++) { // this line is AI generated
+//             if (map[y][x] === 1) ctx.fillStyle = "#555"; // this line is AI generated
+//             else if (map[y][x] === 2) ctx.fillStyle = "#32CD32"; // this line is AI generated
+//             else ctx.fillStyle = "#eee"; // this line is AI generated
+//             ctx.fillRect( // this line is AI generated
+//                 mmX + x * minimapTileSize, // this line is AI generated
+//                 mmY + y * minimapTileSize, // this line is AI generated
+//                 minimapTileSize, minimapTileSize // this line is AI generated
+//             ); // this line is AI generated
+//         } // this line is AI generated
+//     } // this line is AI generated
 
 
-    // Player facing direction // this line is AI generated
-    ctx.strokeStyle = "#d11"; // this line is AI generated
-    ctx.lineWidth = 2; // this line is AI generated
-    ctx.beginPath(); // this line is AI generated
-    ctx.moveTo( // this line is AI generated
-        mmX + (player.x / tileSize) * minimapTileSize, // this line is AI generated
-        mmY + (player.y / tileSize) * minimapTileSize // this line is AI generated
-    ); // this line is AI generated
-    ctx.lineTo( // this line is AI generated
-        mmX + (player.x / tileSize + Math.cos(player.angle) * 0.7) * minimapTileSize, // this line is AI generated
-        mmY + (player.y / tileSize + Math.sin(player.angle) * 0.7) * minimapTileSize // this line is AI generated
-    ); // this line is AI generated
-    ctx.stroke(); // this line is AI generated
-    ctx.restore(); // this line is AI generated
-} // this line is AI generated
-// -------- End Minimap Drawing --------
+//     // Snails on minimap // this line is AI generated
+//     for (const snail of snails) { // this line is AI generated
+//         ctx.fillStyle = snail.color; // this line is AI generated
+//         const sx = mmX + snail.x * minimapTileSize; // this line is AI generated
+//         const sy = mmY + snail.y * minimapTileSize; // this line is AI generated
+//         ctx.beginPath(); // this line is AI generated
+//         ctx.arc(sx, sy, minimapTileSize * 0.6, 0, Math.PI * 2); // this line is AI generated
+//         ctx.fill(); // this line is AI generated
+//     } // this line is AI generated
+
+//     // Player facing direction // this line is AI generated
+//     ctx.strokeStyle = "#d11"; // this line is AI generated
+//     ctx.lineWidth = 2; // this line is AI generated
+//     ctx.beginPath(); // this line is AI generated
+//     ctx.moveTo( // this line is AI generated
+//         mmX + (player.x / tileSize) * minimapTileSize, // this line is AI generated
+//         mmY + (player.y / tileSize) * minimapTileSize // this line is AI generated
+//     ); // this line is AI generated
+//     ctx.lineTo( // this line is AI generated
+//         mmX + (player.x / tileSize + Math.cos(player.angle) * 0.7) * minimapTileSize, // this line is AI generated
+//         mmY + (player.y / tileSize + Math.sin(player.angle) * 0.7) * minimapTileSize // this line is AI generated
+//     ); // this line is AI generated
+//     ctx.stroke(); // this line is AI generated
+//     ctx.restore(); // this line is AI generated
+// } // this line is AI generated
+// // -------- End Minimap Drawing --------
 
 function drawSnails() {
     for (const snail of snails) {
@@ -517,7 +442,7 @@ function drawSnails() {
         const top = groundY - spriteHeight;
         const stripW = Math.max(1, rayStepWidth);
         if (snailImgReady) {
-            // Clip sprite by zBuffer per column so walls hide only blocked portions.
+            // Clip spritegainst walls
             for (let sx = left; sx < left + spriteWidth; sx += stripW) {
                 const sampleX = sx + stripW * 0.5;
                 const rayIdx = Math.floor(sampleX / rayStepWidth);
@@ -552,18 +477,14 @@ function drawSnails() {
 }
 
 function render() {
-    if (!mazeReady) {
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "28px sans-serif";
-        ctx.textAlign = "center";
-        ctx.fillText("Loading maze...", canvas.width / 2, canvas.height / 2);
-        requestAnimationFrame(render);
-        return;
-    }
+
 
     if (gameState === "PLAYING") {
+        if (gameStartTimeMs === null) {
+            gameStartTimeMs = Date.now();
+        }
+        elapsedTimeMs = Date.now() - gameStartTimeMs;
+
         if (keys["a"]) player.angle -= turnSpeed;
         if (keys["d"]) player.angle += turnSpeed;
         const moveAmount = (keys["w"] ? moveSpeed : 0) + (keys["s"] ? -moveSpeed : 0);
@@ -574,6 +495,13 @@ function render() {
         // Resolve movement axis-by-axis to keep smooth wall sliding.
         if (canMoveTo(nextX, player.y)) player.x = nextX;
         if (canMoveTo(player.x, nextY)) player.y = nextY;
+
+        checkEscapeTile();
+        if (gameState !== "PLAYING") {
+            requestAnimationFrame(render);
+            return;
+        }
+
         for (const snail of snails) {
             snail.update({ x: player.x / tileSize, y: player.y / tileSize });
         }
@@ -594,7 +522,7 @@ function render() {
             const wallTop = (canvas.height - ray.wallH) / 2;
             const screenX = i * rayStepWidth;
 
-            if (wallTextureReady) {
+            if (wallTextureReady && ray.hitTile !== 2) {
                 let texX = Math.floor(ray.wallX * wallTexture.width);
                 if ((ray.side === 0 && ray.rayDirX > 0) || (ray.side === 1 && ray.rayDirY < 0)) {
                     texX = wallTexture.width - texX - 1;
@@ -615,7 +543,7 @@ function render() {
                 ctx.fillStyle = `rgba(0, 0, 0, ${0.45 - shade / 500})`;
                 ctx.fillRect(screenX, wallTop, rayStepWidth, ray.wallH);
             } else {
-                ctx.fillStyle = `rgb(${shade * 0.2}, ${shade * 0.3}, ${shade * 0.5})`;
+                ctx.fillStyle = `rgb(${255}, ${255}, ${shade * 0.5})`;
                 ctx.fillRect(screenX, wallTop, rayStepWidth, ray.wallH);
             }
         }
@@ -623,7 +551,7 @@ function render() {
         drawSnails();
 
         // ------- Draw minimap ---------
-        drawMinimap(); // this line is AI generated
+        // drawMinimap(); // this line is AI generated
         // ------------------------------
         const leftArmX = canvas.width * 0.25;
         const rightArmX = canvas.width * 0.75;
@@ -650,16 +578,30 @@ function render() {
             ctx.restore();
         }
 
+        drawTimer(elapsedTimeMs);
+
     } else {
         stopAudio(slimeAudio);
         stopAudio(breathAudio);
         stopAudio(runAudio);
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "white";
-        ctx.font = "42px sans-serif";
         ctx.textAlign = "center";
-        ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
+
+        if (gameState === "ESCAPED") {
+            ctx.fillStyle = "#7CFC00";
+            ctx.font = "48px sans-serif";
+            ctx.fillText("You Escaped!", canvas.width / 2, canvas.height / 2 - 10);
+            ctx.fillStyle = "white";
+            ctx.font = "24px sans-serif";
+            ctx.fillText(`Escape Time ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 38);
+        } else {
+            ctx.fillStyle = "white";
+            ctx.font = "42px sans-serif";
+            ctx.fillText("The snails caught you", canvas.width / 2, canvas.height / 2);
+            ctx.font = "24px sans-serif";
+            ctx.fillText(`You Lasted ${formatElapsedTime(elapsedTimeMs)}`, canvas.width / 2, canvas.height / 2 + 42);
+        }
     }
     requestAnimationFrame(render);
 }
