@@ -187,6 +187,7 @@ const player = {
 let gameState = "PLAYING";
 let gameStartTimeMs = null;
 let elapsedTimeMs = 0;
+let lastDisplayedOutcome = null;
 const zBuffer = new Array(numRays).fill(0);
 const wallTexture = new Image();
 let wallTextureReady = false;
@@ -288,7 +289,40 @@ function updateBreathAudio() {
         tryPlay(breathAudio);
     }
 }
+function updateOutcomeMessage() {
+    if (gameState !== "ESCAPED" && gameState !== "LOST") {
+        return;
+    }
 
+    if (lastDisplayedOutcome === gameState) {
+        return;
+    }
+
+    const message = gameState === "ESCAPED"
+        ? `You Escaped in ${formatElapsedTime(elapsedTimeMs)}!`
+        : `The snails caught you after ${formatElapsedTime(elapsedTimeMs)}.`;
+
+    const container = document.getElementById("dom");
+    if (container) {
+        container.textContent = message;
+    } else {
+        console.error("Message container not found in DOM.");
+    }
+
+    try {
+        document.dispatchEvent(new CustomEvent("game:end", {
+            detail: {
+                state: gameState,
+                message,
+                elapsedTimeMs,
+            },
+        }));
+    } catch (error) {
+        console.error("Error dispatching game end event:", error);
+    }
+
+    lastDisplayedOutcome = gameState;
+}
 function updateRunAudio() {
     const isMoving = !!(keys["w"] || keys["s"]);
     if (isMoving) {
@@ -556,7 +590,7 @@ function render() {
         const leftArmX = canvas.width * 0.25;
         const rightArmX = canvas.width * 0.75;
         const bottom = canvas.height;
-        const armSize = 350; // Adjust this to change arm size on screen
+        const armSize = 350; // change arm size on screen
         const isWalking = !!(keys["w"] || keys["s"]);
         if (isWalking) armBobPhase += armBobSpeed;
         else armBobPhase = 0;
@@ -584,6 +618,7 @@ function render() {
         stopAudio(slimeAudio);
         stopAudio(breathAudio);
         stopAudio(runAudio);
+        updateOutcomeMessage();
         ctx.fillStyle = "black";
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.textAlign = "center";
