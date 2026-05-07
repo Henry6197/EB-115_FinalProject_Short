@@ -1,7 +1,7 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-let map = [
+let map = [ // map is not very scalable tho i could prob make a bunch of them for many small maps
 [0,0,0,1,0,0,0,0,1,0,0,0,0,1],
 [0,1,0,1,0,1,1,0,1,1,0,1,0,1],
 [0,1,0,0,0,1,0,0,0,0,0,1,0,0],
@@ -21,19 +21,19 @@ let map = [
 
 class Snail {
     constructor(x, y, speed, color) {
-        this.x = x;
-        this.y = y;
-        this.speed = speed;
-        this.color = color;
-        this.heightScale = 0.15;
-        this.widthScale = 0.25;
-        this.hitRadiusGrid = 0.12;
+        this.x = x; // location x
+        this.y = y; // location y
+        this.speed = speed; // make sure this is slower than player
+        this.color = color; // this is just incase images dont load proporly 
+        this.heightScale = 0.15; // base height for snail class
+        this.widthScale = 0.25;// base width for snail class
+        this.hitRadiusGrid = 0.12; // base hitbox for snail class
         this.path = [];
         this.lastPathUpdate = 0;
-        this.gridRes = 6; //snails grid is 4x per cell so that they can move more smooth
+        this.gridRes = 6; //snail grid is 6x per cell so that they can move more smooth this does slow them down
     }
 
-    findPath(targetX, targetY) {
+    findPath(targetX, targetY) { // a* pathfinding to player hahahahhaha
         const isBlocked = (gx, gy) => {
             const mX = Math.floor(gx / this.gridRes);
             const mY = Math.floor(gy / this.gridRes);
@@ -72,7 +72,7 @@ class Snail {
                     const nx = curr.x + dx;
                     const ny = curr.y + dy;
                     if (isBlocked(nx, ny) || closedList.has(`${nx},${ny}`)) continue;
-                    // Prevent diagonal corner cutting so snails don't clip through wall corners.
+                    // snail visuals for movment so they dont look buggy when crossing walls
                     if (dx !== 0 && dy !== 0) {
                         if (isBlocked(curr.x + dx, curr.y) || isBlocked(curr.x, curr.y + dy)) continue;
                     }
@@ -163,28 +163,28 @@ let snailImgReady = false;
 const snailImg = loadImage("snail.png", () => {
     snailImgReady = true;
 });
-let snails = [
+let snails = [ // snail spawns
     new LargeSnail(1, 10),
     new TurboSnail(12, 1)
 ];
-const armImg = loadImage("player.png");
+const armImg = loadImage("player.png"); 
 const armImgLeft = loadImage("player.png");
-const FOV = Math.PI / 4;
-const wallh =700;
-const tileSize = 2.5;
-const moveSpeed = 0.045;
-const turnSpeed = 0.025;
-const playerRadius = 0.20;
-const snailAudioDistance = 3.5;
-const breathIntervalMs = 7000;
-const rayStepWidth = 2;
+const FOV = Math.PI / 4; //only 1 of like 4 things that effect the size of the model
+const wallh =700; //only 1 of like 4 things that effect the size of the model
+const tileSize = 2.5; //only 1 of like 4 things that effect the size of the model
+const moveSpeed = 0.045;//this sucks
+const turnSpeed = 0.025;//this kinnda sucks 
+const playerRadius = 0.20;// player hitbox
+const snailAudioDistance = 3.5; //slime.mp3 plays when a snail within 3.5 grids of player
+const breathIntervalMs = 7000; // 7 seconds per 4 sec of breath.mp3
+const rayStepWidth = 2;//only 1 of like 4 things that effect the size of the model
 const numRays = Math.floor(canvas.width / rayStepWidth);
-const player = {
+const player = { // player spawn
     x: (0.5) * tileSize,
     y: (0.5) * tileSize,
     angle: 0
 };
-let gameState = "PLAYING";
+let gameState = "PLAYING"; // controls scenes
 let gameStartTimeMs = null;
 let elapsedTimeMs = 0;
 let lastDisplayedOutcome = null;
@@ -217,14 +217,14 @@ wallTexture.onload = () => {
 };
 wallTexture.src = "wall.png";
 
-function isWallAt(x, y) {
+function isWallAt(x, y) { // on map num 1 is wall
     const cellX = Math.floor(x / tileSize);
     const cellY = Math.floor(y / tileSize);
     if (cellY < 0 || cellY >= map.length || cellX < 0 || cellX >= map[0].length) return true;
     return map[cellY][cellX] === 1;
 }
 
-function checkEscapeTile() {
+function checkEscapeTile() { // on map num 2 is escape tile
     const cellX = Math.floor(player.x / tileSize);
     const cellY = Math.floor(player.y / tileSize);
     if (cellY < 0 || cellY >= map.length || cellX < 0 || cellX >= map[0].length) return;
@@ -334,7 +334,7 @@ function updateRunAudio() {
     }
 }
 
-function castRays(angle) {
+function castRays(angle) { // thank you google + sleepless nights  
     const px = player.x / tileSize;
     const py = player.y / tileSize;
     let mapX = Math.floor(px), mapY = Math.floor(py);
@@ -395,6 +395,9 @@ window.addEventListener("keyup", (event) => {
     keys[event.key.toLowerCase()] = false;
 });
 
+//minimap is commented out and contains AI generated because it was for debuging while building not to be in the final version
+
+
 // // -------- Minimap Drawing Function (AI generated) --------
 // function drawMinimap() { // this line is AI generated
 //     const mapWidth = map[0].length; // this line is AI generated
@@ -453,7 +456,7 @@ window.addEventListener("keyup", (event) => {
 // } // this line is AI generated
 // // -------- End Minimap Drawing --------
 
-function drawSnails() {
+function drawSnails() { 
     for (const snail of snails) {
         const worldX = snail.x * tileSize;
         const worldY = snail.y * tileSize;
@@ -476,7 +479,7 @@ function drawSnails() {
         const top = groundY - spriteHeight;
         const stripW = Math.max(1, rayStepWidth);
         if (snailImgReady) {
-            // Clip spritegainst walls
+            // touching walls
             for (let sx = left; sx < left + spriteWidth; sx += stripW) {
                 const sampleX = sx + stripW * 0.5;
                 const rayIdx = Math.floor(sampleX / rayStepWidth);
@@ -510,7 +513,7 @@ function drawSnails() {
     }
 }
 
-function render() {
+function render() { // canvas woo hoo
 
 
     if (gameState === "PLAYING") {
@@ -526,16 +529,13 @@ function render() {
         const moveY = Math.sin(player.angle) * moveAmount;
         const nextX = player.x + moveX;
         const nextY = player.y + moveY;
-        // Resolve movement axis-by-axis to keep smooth wall sliding.
         if (canMoveTo(nextX, player.y)) player.x = nextX;
         if (canMoveTo(player.x, nextY)) player.y = nextY;
-
         checkEscapeTile();
         if (gameState !== "PLAYING") {
             requestAnimationFrame(render);
             return;
         }
-
         for (const snail of snails) {
             snail.update({ x: player.x / tileSize, y: player.y / tileSize });
         }
@@ -543,11 +543,9 @@ function render() {
         updateBreathAudio();
         updateSnailAudio();
         checkSnailCollisions();
-
         // Draw Environment
         ctx.fillStyle = "#000000"; ctx.fillRect(0, 0, canvas.width, canvas.height/2);
         ctx.fillStyle = "#9f9f9f"; ctx.fillRect(0, canvas.height/2, canvas.width, canvas.height/2);
-
         // Draw Walls
         for (let i = 0; i < numRays; i++) {
             let ray = castRays((player.angle - FOV / 2) + (i / numRays) * FOV);
@@ -590,7 +588,7 @@ function render() {
         const leftArmX = canvas.width * 0.25;
         const rightArmX = canvas.width * 0.75;
         const bottom = canvas.height;
-        const armSize = 350; // change arm size on screen
+        const armSize = 350; // change arm size 
         const isWalking = !!(keys["w"] || keys["s"]);
         if (isWalking) armBobPhase += armBobSpeed;
         else armBobPhase = 0;
